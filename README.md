@@ -73,7 +73,7 @@ brew install openssl
 ### Building
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/cpp-blockchain.git
+git clone https://github.com/brockbenton/cpp-blockchain.git
 cd cpp-blockchain
 
 # Build using Make
