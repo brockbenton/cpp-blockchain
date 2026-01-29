@@ -1,6 +1,6 @@
 # Compiler settings
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -pthread
+CXXFLAGS = -std=c++17 -Wall -Wextra -pthread -I$(SRC_DIR)/core -I$(SRC_DIR)/network
 LDFLAGS = -lssl -lcrypto -pthread
 
 # Directories
