@@ -27,7 +27,7 @@ class Node {
         std::thread listenerThread; // Background thread for listening
         std::mutex chainMutex; // Protect blockchain from concurrent access
         std::mutex peersMutex;  // Protect peerSockets vector
-        bool running; // Is node running?
+        std::atomic<bool> running; // Is node running?
     
     public:
         // Constructor
