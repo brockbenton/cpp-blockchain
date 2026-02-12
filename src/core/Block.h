@@ -21,14 +21,14 @@ class Block {
         // Calculate the hash of the block
         std::string calculateHash() const;
 
+        // Compute Merkle root from transactions
+        std::string computeMerkleRoot() const;
+
         // Mine the block by finding a valid hash
         void mineBlock(int difficulty);
 
         // Add a transaction to the block
         void addTransaction(Transaction tx);
-
-        // Combine all transactions for hashing
-        std::string getTransactionsAsString() const;
 
         // Convert block to JSON format
         std::string toJSON() const;

@@ -1,9 +1,7 @@
 #include "Block.h"
+#include "sha256.h"
 #include <iostream>
-#include <sstream>
-#include <iomanip>
 #include <vector>
-#include <openssl/sha.h> // Bitcoin uses SHA-256
 
 Block::Block(int idx, std::string prevHash, std::vector<Transaction> txs) {
     index = idx;
@@ -14,28 +12,46 @@ Block::Block(int idx, std::string prevHash, std::vector<Transaction> txs) {
     // hash = calculateHash();
 };
 
-std::string Block::calculateHash() const {
-    // Concatenate
-    std::string toHash = 
-        std::to_string(index) + 
-        std::to_string(timestamp) + 
-        std::to_string(nonce) +
-        getTransactionsAsString() +
-        previousHash;
-    
-    // SHA256 Function
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, toHash.c_str(), toHash.size());
-    SHA256_Final(hash, &sha256);
-    std::stringstream ss;
-    for(int i = 0; i < SHA256_DIGEST_LENGTH; i++)
-    {
-        ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+std::string Block::computeMerkleRoot() const {
+    if (transactions.empty()) {
+        return sha256("");
     }
 
-    return ss.str();
+    // Hash each transaction
+    std::vector<std::string> hashes;
+    for (const Transaction& tx : transactions) {
+        hashes.push_back(sha256(tx.toString()));
+    }
+
+    // Repeatedly pair and hash until one remains
+    while (hashes.size() > 1) {
+        // If the size is odd, copy the last tx
+        if (hashes.size() % 2 != 0) {
+            hashes.push_back(hashes.back());
+        }
+
+        // Build the Merkle tree from the ground up
+        std::vector<std::string> newLevel;
+        for (size_t i = 0; i < hashes.size(); i += 2) {
+            // Pair 1, 2 then 3, 4 then etc.
+            newLevel.push_back(sha256(hashes[i] + hashes[i + 1]));
+        }
+        hashes = newLevel;
+    }
+
+    // Return Merkle Root
+    return hashes[0];
+}
+
+std::string Block::calculateHash() const {
+    std::string toHash =
+        std::to_string(index) +
+        std::to_string(timestamp) +
+        std::to_string(nonce) +
+        computeMerkleRoot() +
+        previousHash;
+
+    return sha256(toHash);
 }
 
 void Block::mineBlock(int diff) {
@@ -67,14 +83,6 @@ void Block::mineBlock(int diff) {
 
 void Block::addTransaction(Transaction tx) {
     transactions.push_back(tx);
-}
-
-std::string Block::getTransactionsAsString() const {
-    std::string txString = "";
-    for (const Transaction& tx : transactions) {
-        txString += tx.toString();
-    }
-    return txString;
 }
 
 std::string Block::toJSON() const {
