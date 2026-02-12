@@ -23,7 +23,7 @@ void Node::start() {
     // 1. Create a socket (like in simple_server)
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
-    // Allow port reuse (for testing)
+    // 1.5. Allow port reuse
     int opt = 1;
     setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
