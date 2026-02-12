@@ -59,7 +59,10 @@ void Node::listenForConnections() {
         std::cout << "Peer connected!" << std::endl;
 
         // Add to our list of peers
-        peerSockets.push_back(peerSocket);
+        {
+            std::lock_guard<std::mutex> lock(peersMutex);
+            peerSockets.push_back(peerSocket);
+        }
 
         // Handle this peer in another thread
         std::thread(&Node::handlePeer, this, peerSocket).detach();
@@ -75,8 +78,12 @@ void Node::stop() {
     }
 
     // Close all peer connections
-    for (int sock : peerSockets) {
-        close(sock);
+    {
+        std::lock_guard<std::mutex> lock(peersMutex);
+        for (int sock : peerSockets) {
+            close(sock);
+        }
+        peerSockets.clear();
     }
 
     // Wait for listener thread to finish
@@ -111,7 +118,10 @@ bool Node::connectToPeer(const std::string& address, int port) {
     std::cout << "Connected to peer: " << address << ":" << port << std::endl;
 
     // 4. Add to peer list
-    peerSockets.push_back(peerSocket);
+    {
+        std::lock_guard<std::mutex> lock(peersMutex);
+        peerSockets.push_back(peerSocket);
+    }
 
     // 5. Handle this peer in another thread
     std::thread(&Node::handlePeer, this, peerSocket).detach();
@@ -138,14 +148,17 @@ void Node::handlePeer(int peerSocket) {
             close(peerSocket);
             
             // Remove from peerSockets vector
-            for (size_t i = 0; i < peerSockets.size(); i++) {
-                if (peerSockets[i] == peerSocket) {
-                    peerSockets.erase(peerSockets.begin() + i);
-                    break;
+            {
+                std::lock_guard<std::mutex> lock(peersMutex);
+                for (size_t i = 0; i < peerSockets.size(); i++) {
+                    if (peerSockets[i] == peerSocket) {
+                        peerSockets.erase(peerSockets.begin() + i);
+                        break; // breaks for finding socket
+                    }
                 }
-            }
-    
-            break;
+            } // lock released
+
+            break; // breaks while to stop handling
         }
 
         std::string message(buffer);
