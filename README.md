@@ -225,12 +225,7 @@ cpp-blockchain/
 
 ## 🤝 Contributing
 
-Contributions welcome! Areas for improvement:
-- UTXO transaction model
-- Merkle trees for efficient verification
-- Enhanced fork resolution
-- GUI frontend
-- Smart contracts
+Contributions welcome!
 
 ## 📝 License
 
