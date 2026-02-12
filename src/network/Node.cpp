@@ -310,16 +310,10 @@ void Node::sendLength(int peerSocket) {
 }
 
 void Node::syncWithPeer(int peerSocket) {
-    // 1. Ask peer for their chain length
     std::string request = "{\"type\":\"GET_LENGTH\"}";
     send(peerSocket, request.c_str(), request.length(), 0);
-    
-    // 2. Wait for response and compare
-    // (This is simplified - in reality you'd need async handling)
-    
-    // 3. If their chain is longer, request full chain
-    request = "{\"type\":\"GET_CHAIN\"}";
-    send(peerSocket, request.c_str(), request.length(), 0);
+
+    // The response will be handled in handlePeer when we receive the LENGTH message
 }
 
 void Node::broadcastMessage(const std::string& message) {
