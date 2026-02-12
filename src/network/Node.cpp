@@ -294,6 +294,9 @@ void Node::receiveBlock(const std::string& message) {
 
     Block block = Block::fromJSON(blockJson);
 
+    // Lock for the entire check + add (fixes TOCTOU race)
+    std::lock_guard<std::mutex> lock(chainMutex);
+
     if (block.index == blockchain.getChain().size()) {
         if (block.previousHash == blockchain.getChain()[block.index - 1].hash) {
             std::string target = "";
