@@ -14,6 +14,7 @@ class Block {
         std::vector<Transaction> transactions;
         std::time_t timestamp; // time of creation
         int nonce; // used for proof-of-work
+        std::string merkleRoot; // cached Merkle root
 
         // Constructor
         Block(int idx, std::string prevHash, std::vector<Transaction> txs);

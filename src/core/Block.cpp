@@ -9,7 +9,7 @@ Block::Block(int idx, std::string prevHash, std::vector<Transaction> txs) {
     transactions = txs;
     timestamp = time(nullptr);
     nonce = 0;
-    // hash = calculateHash();
+    merkleRoot = computeMerkleRoot();
 };
 
 std::string Block::computeMerkleRoot() const {
@@ -48,7 +48,7 @@ std::string Block::calculateHash() const {
         std::to_string(index) +
         std::to_string(timestamp) +
         std::to_string(nonce) +
-        computeMerkleRoot() +
+        merkleRoot +
         previousHash;
 
     return sha256(toHash);
@@ -56,6 +56,8 @@ std::string Block::calculateHash() const {
 
 void Block::mineBlock(int diff) {
     std::cout << "\nMining block..." << std::endl;
+
+    merkleRoot = computeMerkleRoot();
 
     std::string target = "";
     for (int i = 0; i < diff; i++) {
@@ -83,6 +85,7 @@ void Block::mineBlock(int diff) {
 
 void Block::addTransaction(Transaction tx) {
     transactions.push_back(tx);
+    merkleRoot = computeMerkleRoot();
 }
 
 std::string Block::toJSON() const {
@@ -172,6 +175,7 @@ Block Block::fromJSON(const std::string& json) {
     block.hash = hash;
     block.timestamp = timestamp;
     block.nonce = nonce;
+    block.merkleRoot = block.computeMerkleRoot();
     
     return block;
 }
