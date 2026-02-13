@@ -65,6 +65,7 @@ Block& Blockchain::getBlock(int idx) {
     return chain[idx];
 }
 
+// Validates instances own chain
 bool Blockchain::isChainValid() {
     for (size_t i = 1; i < chain.size(); i++) {
         Block block = chain[i];
@@ -96,6 +97,7 @@ bool Blockchain::isChainValid() {
     return true;
 }
 
+// Validates a given chain (used when receiving a chain from peer)
 bool Blockchain::isValidChain(const std::vector<Block>& testChain) const {
     if (testChain.empty()) {
         return false;
