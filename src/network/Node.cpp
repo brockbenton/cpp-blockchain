@@ -325,9 +325,7 @@ void Node::receiveBlock(const std::string& message) {
             }
             if (block.hash.substr(0, blockchain.getDifficulty()) == target) {
                 if (block.hash == block.calculateHash()) {
-                    chainMutex.lock();
                     blockchain.addExistingBlock(block);
-                    chainMutex.unlock();
 
                     std::cout << "Added a new block from peer!" << std::endl;
                 }
