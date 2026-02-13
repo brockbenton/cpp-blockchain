@@ -78,6 +78,9 @@ class Node {
 
         // Send our chain length to a peer
         void sendLength(int peerSocket);
+
+        // Helper to send entire message (handles partial sends)
+        void sendAll(int socket, const std::string& message);
 };
 
 #endif

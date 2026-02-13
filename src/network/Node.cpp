@@ -15,6 +15,26 @@ Node::~Node() {
     stop(); // Clean up
 }
 
+void Node::sendAll(int socket, const std::string& message) {
+    size_t totalSent = 0;
+    size_t remaining = message.length();
+    
+    while (totalSent < message.length()) {
+        int sent = send(socket, 
+                       message.c_str() + totalSent, 
+                       remaining, 
+                       0);
+        
+        if (sent <= 0) {
+            std::cout << "Send failed or connection closed" << std::endl;
+            break;
+        }
+        
+        totalSent += sent;
+        remaining -= sent;
+    }
+}
+
 Blockchain& Node::getBlockchain() {
     return blockchain;
 }
@@ -202,7 +222,7 @@ void Node::handlePeer(int peerSocket) {
             if (peerLength > ourLength) {
                 std::cout << "Peer has longer chain! Requesting..." << std::endl;
                 std::string request = "{\"type\":\"GET_CHAIN\"}";
-                send(peerSocket, request.c_str(), request.length(), 0);
+                sendAll(peerSocket, request);
             }
         }
     }
@@ -220,7 +240,7 @@ void Node::sendChain(int peerSocket) {
     chainMutex.unlock();
 
     // Send
-    send(peerSocket, message.c_str(), message.length(), 0);
+    sendAll(peerSocket, message);
 }
 
 
@@ -322,12 +342,12 @@ void Node::sendLength(int peerSocket) {
     chainMutex.unlock();
 
     std::string message = "{\"type\":\"LENGTH\",\"value\":" + std::to_string(length) + "}";
-    send(peerSocket, message.c_str(), message.length(), 0);
+    sendAll(peerSocket, message);
 }
 
 void Node::syncWithPeer(int peerSocket) {
     std::string request = "{\"type\":\"GET_LENGTH\"}";
-    send(peerSocket, request.c_str(), request.length(), 0);
+    sendAll(peerSocket, request);
 
     // The response will be handled in handlePeer when we receive the LENGTH message
 }
@@ -339,7 +359,7 @@ void Node::broadcastMessage(const std::string& message) {
     for (int sock : peerSockets) {
         // File Descriptor: ignore if closed
         if (sock >= 0) {
-            send(sock, message.c_str(), message.length(), 0);
+            sendAll(sock, message);
         }
     }
 
@@ -366,7 +386,7 @@ void Node::mineAndBroadcast(std::vector<Transaction> transactions) {
 
 void Node::requestChainFromPeer(int peerSocket) {
     std::string message = "{\"type\":\"GET_CHAIN\"}";
-    send(peerSocket, message.c_str(), message.length(), 0);
+    sendAll(peerSocket, message);
     std::cout << "Requested chain from peer" << std::endl;
 }
 
