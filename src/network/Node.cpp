@@ -86,6 +86,9 @@ void Node::listenForConnections() {
 
         // Handle this peer in another thread
         std::thread(&Node::handlePeer, this, peerSocket).detach();
+
+        // Sync with the new peer (check if they have a longer chain)
+        syncWithPeer(peerSocket);
     }
 }
 
@@ -197,7 +200,7 @@ void Node::handlePeer(int peerSocket) {
         }
         else if (message.find("\"type\":\"NEW_BLOCK\"") != std::string::npos) {
             // Peer mined a new block
-            receiveBlock(message);
+            receiveBlock(message, peerSocket);
         }
         else if (message.find("\"type\":\"GET_LENGTH\"") != std::string::npos) {
             // Peer wants to know our chain length
@@ -290,7 +293,7 @@ void Node::receiveChain(const std::string& message, int peerSocket) {
     chainMutex.unlock();
 }
 
-void Node::receiveBlock(const std::string& message) {
+void Node::receiveBlock(const std::string& message, int peerSocket) {
     // Extract block JSON
     // Parse to Block object
     // Add to our chain if valid
@@ -317,20 +320,19 @@ void Node::receiveBlock(const std::string& message) {
     // Lock for the entire check + add (fixes TOCTOU race)
     std::lock_guard<std::mutex> lock(chainMutex);
 
-    if (block.index == blockchain.getChain().size()) {
-        if (block.previousHash == blockchain.getChain()[block.index - 1].hash) {
-            std::string target = "";
-            for (int i = 0; i < blockchain.getDifficulty(); i++) {
-                target += "0";
-            }
-            if (block.hash.substr(0, blockchain.getDifficulty()) == target) {
-                if (block.hash == block.calculateHash()) {
-                    blockchain.addExistingBlock(block);
-
-                    std::cout << "Added a new block from peer!" << std::endl;
-                }
-            }
+    if (block.index == blockchain.getChain().size() &&
+        block.previousHash == blockchain.getChain()[block.index - 1].hash) {
+        std::string target(blockchain.getDifficulty(), '0');
+        if (block.hash.substr(0, blockchain.getDifficulty()) == target &&
+            block.hash == block.calculateHash()) {
+            blockchain.addExistingBlock(block);
+            std::cout << "Added a new block from peer!" << std::endl;
         }
+    } else {
+        // Block doesn't fit our chain so request the full chain from peer
+        std::cout << "Block doesn't fit our chain, requesting full chain from peer..." << std::endl;
+        std::string request = "{\"type\":\"GET_CHAIN\"}";
+        sendAll(peerSocket, request);
     }
 }
 

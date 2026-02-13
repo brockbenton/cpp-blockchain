@@ -74,7 +74,7 @@ class Node {
         void receiveChain(const std::string& message, int peerSocket);
 
         // Receive a new block from a peer
-        void receiveBlock(const std::string& message);
+        void receiveBlock(const std::string& message, int peerSocket);
 
         // Send our chain length to a peer
         void sendLength(int peerSocket);
