@@ -337,6 +337,7 @@ void Node::broadcastMessage(const std::string& message) {
     std::lock_guard<std::mutex> lock(peersMutex);
 
     for (int sock : peerSockets) {
+        // File Descriptor: ignore if closed
         if (sock >= 0) {
             send(sock, message.c_str(), message.length(), 0);
         }
